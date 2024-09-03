@@ -3,10 +3,8 @@ package com.ikop.diet.controller;
 import com.ikop.diet.model.Food;
 import com.ikop.diet.service.FoodService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
