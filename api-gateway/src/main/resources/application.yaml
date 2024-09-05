@@ -1,0 +1,15 @@
+spring:
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          - id: food-catalog-route
+            uri: ${FOOD_CATALOG_URI:http://localhost:8091}
+            predicates:
+              - Path=/store/food/**
+          #            filters:
+          #              - PrefixPath=/store
+          - id: diary-route
+            uri: ${DIARY_URI:http://localhost:8092}
+            predicates:
+              - Path=/diary/status/**
