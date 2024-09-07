@@ -38,4 +38,9 @@ public class FoodController {
         Food created = foodService.saveFood(foodToCreate);
         return ResponseEntity.ok(created);
     }
+
+    @GetMapping("/search/{text}")
+    public ResponseEntity<List<Food>> searchByText(@PathVariable String text) {
+        return ResponseEntity.ok(foodService.searchForFood(text));
+    }
 }

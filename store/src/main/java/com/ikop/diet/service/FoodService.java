@@ -25,5 +25,9 @@ public class FoodService {
                 .orElseThrow(() -> new FoodNotFoundException("cannot find food with id " + id));
     }
 
+    public List<Food> searchForFood(String textToSearch) {
+        return foodRepository.searchByText(textToSearch);
+    }
+
 
 }
