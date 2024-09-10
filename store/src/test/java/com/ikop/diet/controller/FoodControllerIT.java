@@ -16,12 +16,13 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.net.MalformedURLException;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.CollectionAssert.assertThatCollection;
 
 
 /**
@@ -103,7 +104,7 @@ class FoodControllerIT {
     }
 
     @Test
-    void createFoodsAndReadThem() throws MalformedURLException {
+    void createFoodsAndReadThem() {
         URI urlSave = UriComponentsBuilder.newInstance()
                 .scheme("http")
                 .host(HOST)
@@ -119,7 +120,6 @@ class FoodControllerIT {
         assertThat(created.getBody().getDescription()).isEqualTo("some desc");
 
 
-//
         ResponseEntity<Foods> response = testRestTemplate.getForEntity(urlGetAllFoods, Foods.class);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody().getFoods().size()).isEqualTo(1);
@@ -129,6 +129,48 @@ class FoodControllerIT {
         assertThat(response.getBody().getFoods().get(0).getDescription()).isEqualTo("some desc");
     }
 
+    @Test
+    void searchForFood() {
+        Food food1 = new Food(null, "food1", 11, "description 1");
+        Food food2 = new Food(null, "food2", 22, "description 2");
+        Food food3 = new Food(null, "food3", 22, "description 3");
+        Collection<Food> foodsToCreate = List.of(food1, food2, food3);
+        mongoTemplate.insertAll(foodsToCreate);
+
+        String searchPathOrg = "/store/food/search/TEXT_TO_SEARCH";
+
+        String searchPath = searchPathOrg.replace("TEXT_TO_SEARCH", "food1");
+        URI urlSearchForFood = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path(searchPath)
+                .build().toUri();
+
+
+        ResponseEntity<Food[]> getFoodByIdResponse = testRestTemplate.getForEntity(urlSearchForFood, Food[].class);
+        assertThat(getFoodByIdResponse.getStatusCode().value()).isEqualTo(200);
+        assertThat(Arrays.stream(getFoodByIdResponse.getBody()).count()).isEqualTo(1);
+        assertThat(getFoodByIdResponse.getBody()[0].getId()).isEqualTo(food1.getId());
+
+
+        searchPath = searchPathOrg.replace("TEXT_TO_SEARCH", "description");
+        urlSearchForFood = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path(searchPath)
+                .build().toUri();
+
+        getFoodByIdResponse = testRestTemplate.getForEntity(urlSearchForFood, Food[].class);
+        assertThat(getFoodByIdResponse.getStatusCode().value()).isEqualTo(200);
+        assertThat(Arrays.stream(getFoodByIdResponse.getBody()).count()).isEqualTo(3);
+        List<String> allFoundsIds = Arrays.stream(getFoodByIdResponse.getBody()).map(Food::getId).toList();
+        List<String> expectedIds = foodsToCreate.stream().map(Food::getId).toList();
+
+        // all 3 foods need to be returned
+        assertThatCollection(allFoundsIds).containsExactlyInAnyOrderElementsOf(expectedIds);
+    }
 
     private void removeAllFromCollection() {
         mongoTemplate.remove(new Query(), COLLECTION_NAME);
