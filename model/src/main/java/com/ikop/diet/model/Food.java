@@ -13,8 +13,8 @@ public class Food {
     @Id
     private String id;
     @TextIndexed
-    private final String name;
-    private final double points;
+    private String name;
+    private double points;
     @TextIndexed
-    private final String description;
+    private String description;
 }
