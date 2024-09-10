@@ -4,6 +4,7 @@ import com.ikop.diet.model.Food;
 import com.ikop.diet.service.FoodService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -36,7 +37,7 @@ public class FoodController {
     @PostMapping
     public ResponseEntity<Food> createFood(@RequestBody Food foodToCreate) {
         Food created = foodService.saveFood(foodToCreate);
-        return ResponseEntity.ok(created);
+        return new ResponseEntity(created, HttpStatusCode.valueOf(201));
     }
 
     @GetMapping("/search/{text}")
