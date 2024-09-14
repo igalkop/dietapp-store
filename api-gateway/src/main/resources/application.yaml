@@ -12,7 +12,7 @@ spring:
           - id: diary-route
             uri: ${DIARY_URI:http://localhost:8092}
             predicates:
-              - Path=/diary/status/**
+              - Path=/diary/**
 
 
   security:

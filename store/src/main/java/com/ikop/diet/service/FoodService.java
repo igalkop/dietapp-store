@@ -1,6 +1,8 @@
 package com.ikop.diet.service;
 
+import com.ikop.diet.mapper.FoodMapper;
 import com.ikop.diet.model.Food;
+import com.ikop.diet.model.FoodToCreate;
 import com.ikop.diet.repository.FoodRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,9 +13,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FoodService {
     private final FoodRepository foodRepository;
+    private final FoodMapper foodMapper;
 
-    public Food saveFood(Food food) {
-        return foodRepository.save(food);
+    public Food saveFood(FoodToCreate foodToCreate) {
+        return foodRepository.save(foodMapper.foodCreateToFood(foodToCreate));
     }
 
     public List<Food> getAllFoods() {

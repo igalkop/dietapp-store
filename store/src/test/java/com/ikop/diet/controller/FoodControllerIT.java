@@ -1,6 +1,9 @@
 package com.ikop.diet.controller;
 
+import com.ikop.diet.mapper.FoodMapper;
 import com.ikop.diet.model.Food;
+import com.ikop.diet.model.FoodCreateDTO;
+import com.ikop.diet.model.FoodDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +43,9 @@ class FoodControllerIT {
 
     @Autowired
     private TestRestTemplate testRestTemplate;
+
+    @Autowired
+    private FoodMapper foodMapper;
 
     private URI urlGetAllFoods;
 
@@ -100,7 +106,9 @@ class FoodControllerIT {
         assertThat(getAllFoodsResponse.getStatusCode().value()).isEqualTo(200);
 
         assertThat(getAllFoodsResponse.getBody().getFoods().size()).isEqualTo(foodsToCreate.size());
-        assertThat(getAllFoodsResponse.getBody().getFoods()).isEqualTo(foodsToCreate);
+        assertThatCollection(getAllFoodsResponse.getBody().getFoods())
+                .containsExactlyInAnyOrderElementsOf(foodsToCreate.stream().map(food -> foodMapper.foodToFoodDto(food)).toList());
+
     }
 
     @Test
@@ -112,7 +120,7 @@ class FoodControllerIT {
                 .path("/store/food")
                 .build().toUri();
 
-        ResponseEntity<Food> created = testRestTemplate.postForEntity(urlSave, new Food(null, "food name", 2.5, "some desc"), Food.class);
+        ResponseEntity<FoodDTO> created = testRestTemplate.postForEntity(urlSave, new FoodCreateDTO("food name", 2.5, "some desc"), FoodDTO.class);
         assertThat(created.getStatusCode().value()).isEqualTo(201);
         assertThat(created.getBody().getId()).isNotNull();
         assertThat(created.getBody().getName()).isEqualTo("food name");
