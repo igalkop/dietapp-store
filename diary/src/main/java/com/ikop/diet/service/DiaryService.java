@@ -16,8 +16,7 @@ public class DiaryService {
     private final DiaryEntryRepository diaryEntryRepository;
 
     public DiaryEntry save(DiaryEntry diaryEntry) {
-        DiaryEntry saved = diaryEntryRepository.save(diaryEntry);
-        return saved;
+        return diaryEntryRepository.save(diaryEntry);
     }
 
     public List<DiaryEntry> getAllForDate(LocalDate date) {

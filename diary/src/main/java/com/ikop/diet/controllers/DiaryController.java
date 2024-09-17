@@ -19,7 +19,7 @@ public class DiaryController {
     private final DiaryService diaryService;
 
     @GetMapping("/{year}/{month}/{day}")
-    public ResponseEntity<List<DiaryEntry>> getAllForDate(int year, int month, int day) {
+    public ResponseEntity<List<DiaryEntry>> getAllForDate(@PathVariable int year, @PathVariable int month, @PathVariable int day) {
         LocalDate date = LocalDate.of(year, month, day);
         List<DiaryEntry> allEntriesDate = diaryService.getAllForDate(date);
         return ResponseEntity.ok(allEntriesDate);
@@ -41,7 +41,7 @@ public class DiaryController {
     @GetMapping("/list/{year}/{month}/{day}")
     public ResponseEntity<EntriesForDate> getAllEntriesForDay(@PathVariable Integer year, @PathVariable Integer month, @PathVariable Integer day) {
         LocalDate date = LocalDate.of(year, month, day);
-        EntriesForDate EntriesForDate = diaryService.getAllEntriesForDate(date);
-        return ResponseEntity.ok(EntriesForDate);
+        EntriesForDate allEntriesForDate = diaryService.getAllEntriesForDate(date);
+        return ResponseEntity.ok(allEntriesForDate);
     }
 }
