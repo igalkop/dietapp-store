@@ -9,21 +9,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @RestController
-@RequestMapping("/diary")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class DiaryController {
 
     private final DiaryService diaryService;
 
-    @GetMapping("/{year}/{month}/{day}")
-    public ResponseEntity<List<DiaryEntry>> getAllForDate(@PathVariable int year, @PathVariable int month, @PathVariable int day) {
-        LocalDate date = LocalDate.of(year, month, day);
-        List<DiaryEntry> allEntriesDate = diaryService.getAllForDate(date);
-        return ResponseEntity.ok(allEntriesDate);
-    }
 
     @PostMapping
     public ResponseEntity<DiaryEntry> createDiaryEntry(@RequestBody DiaryEntry diaryEntry) {
