@@ -24,13 +24,6 @@ public class DiaryController {
         return new ResponseEntity<>(saved, HttpStatusCode.valueOf(201));
     }
 
-    @GetMapping("/points/{year}/{month}/{day}")
-    public ResponseEntity<Double> getTotalPointsForDate(@PathVariable Integer year, @PathVariable Integer month, @PathVariable Integer day) {
-        LocalDate date = LocalDate.of(year, month, day);
-        double totalPointsForDate = diaryService.getTotalPointsForDate(date);
-        return ResponseEntity.ok(totalPointsForDate);
-    }
-
     @GetMapping("/list/{year}/{month}/{day}")
     public ResponseEntity<EntriesForDate> getAllEntriesForDay(@PathVariable Integer year, @PathVariable Integer month, @PathVariable Integer day) {
         LocalDate date = LocalDate.of(year, month, day);
