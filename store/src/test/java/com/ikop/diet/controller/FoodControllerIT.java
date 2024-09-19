@@ -13,11 +13,14 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -26,6 +29,7 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.CollectionAssert.assertThatCollection;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 
 /**
@@ -93,6 +97,26 @@ class FoodControllerIT {
         assertThat(getFoodByIdResponse.getBody().getName()).isEqualTo("food1");
         assertThat(getFoodByIdResponse.getBody().getPoints()).isEqualTo(11);
         assertThat(getFoodByIdResponse.getBody().getDescription()).isEqualTo("description 1");
+    }
+
+    @Test
+    void getFoodByIdForNoneExistingId() {
+        String idPath = "/store/food/FOOD_ID";
+
+
+        Food foodToCreate = new Food(null, "food1", 11, "description 1");
+        mongoTemplate.insert(foodToCreate);
+        idPath = idPath.replace("FOOD_ID", "12345567664");
+        URI urlGetFoodById = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path(idPath)
+                .build().toUri();
+
+        ResponseEntity<Food> getFoodByIdResponse = testRestTemplate.getForEntity(urlGetFoodById, Food.class);
+
+        assertThat(getFoodByIdResponse.getStatusCode().value()).isEqualTo(404);
     }
 
     @Test
@@ -178,6 +202,60 @@ class FoodControllerIT {
 
         // all 3 foods need to be returned
         assertThatCollection(allFoundsIds).containsExactlyInAnyOrderElementsOf(expectedIds);
+    }
+
+    @Test
+    void testUpdateFood() throws JsonProcessingException {
+        Food food1 = new Food(null, "food1", 11, "description 1");
+        mongoTemplate.insert(food1);
+
+        String idPath = "/store/food/FOOD_ID";
+        idPath = idPath.replace("FOOD_ID", food1.getId());
+        URI urlGetFoodById = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path(idPath)
+                .build().toUri();
+
+        Object foodToUpdate = new Food(food1.getId(), "food 1 after update", 13, "decription after update");
+        String requestBody = new ObjectMapper().writeValueAsString(foodToUpdate);
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
+        HttpEntity<String> httpEntity = new HttpEntity<String>(requestBody, headers);
+        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(urlGetFoodById, HttpMethod.PUT, httpEntity, Void.class);
+        assertThat(responseEntity.getBody()).isNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
+
+        Food foodAfterUpdate = mongoTemplate.findById(food1.getId(), Food.class);
+        assertThat(foodAfterUpdate).isNotNull();
+        assertThat(foodAfterUpdate).isEqualTo(foodToUpdate);
+    }
+
+    @Test
+    void testUpdateFoodWithIncorrectIdInPath() throws JsonProcessingException {
+        Food food1 = new Food(null, "food1", 11, "description 1");
+        mongoTemplate.insert(food1);
+
+        String idPath = "/store/food/FOOD_ID";
+        idPath = idPath.replace("FOOD_ID", "123123123");
+        URI urlGetFoodById = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path(idPath)
+                .build().toUri();
+
+        Object foodToUpdate = new Food(food1.getId(), "food 1 after update", 13, "decription after update");
+        String requestBody = new ObjectMapper().writeValueAsString(foodToUpdate);
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
+        HttpEntity<String> httpEntity = new HttpEntity<String>(requestBody, headers);
+
+        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(urlGetFoodById, HttpMethod.PUT, httpEntity, Void.class);
+
+        assertThat(responseEntity.getBody()).isNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
     }
 
     private void removeAllFromCollection() {
