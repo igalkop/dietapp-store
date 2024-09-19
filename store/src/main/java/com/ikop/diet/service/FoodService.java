@@ -23,6 +23,13 @@ public class FoodService {
         return foodRepository.findAll();
     }
 
+    public void updateFood(String foodIdToUpdate, Food foodToUpdate) {
+        if (!foodIdToUpdate.equalsIgnoreCase(foodToUpdate.getId())) {
+            throw new FoodIdNotMatchForUpdateException(foodIdToUpdate, foodToUpdate.getId());
+        }
+        foodRepository.save(foodToUpdate);
+    }
+
     public Food findById(String id) {
         return foodRepository.findById(id)
                 .orElseThrow(() -> new FoodNotFoundException("cannot find food with id " + id));

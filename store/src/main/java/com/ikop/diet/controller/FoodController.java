@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -30,18 +29,20 @@ public class FoodController {
 
     @GetMapping("/{id}")
     public ResponseEntity<FoodDTO> getByFoodId(@PathVariable String id) {
-        try {
-            Food byId = foodService.findById(id);
-            return ResponseEntity.ok(foodMapper.foodToFoodDto(byId));
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        Food byId = foodService.findById(id);
+        return ResponseEntity.ok(foodMapper.foodToFoodDto(byId));
     }
 
     @PostMapping
     public ResponseEntity<FoodDTO> createFood(@RequestBody FoodCreateDTO foodToCreateDTO) {
         Food created = foodService.saveFood(foodMapper.foodCreateDtoToFoodCreate(foodToCreateDTO));
         return new ResponseEntity(foodMapper.foodToFoodDto(created), HttpStatusCode.valueOf(201));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<HttpStatus> updateFood(@PathVariable String id, @RequestBody Food foodToUpdate) {
+        foodService.updateFood(id, foodToUpdate);
+        return ResponseEntity.ok(null);
     }
 
     @GetMapping("/search/{text}")
