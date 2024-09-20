@@ -11,6 +11,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  output:
+    ansi:
+      enabled: ALWAYS
 
 management:
   endpoints:

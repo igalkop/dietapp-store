@@ -4,6 +4,7 @@ import com.ikop.diet.model.DateInfoSummary;
 import com.ikop.diet.model.DiaryEntry;
 import com.ikop.diet.repository.DiaryEntryRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DiaryService {
 
     private final DiaryEntryRepository diaryEntryRepository;
@@ -38,9 +40,11 @@ public class DiaryService {
 
     public void update(Long idToUpdate, DiaryEntry diaryEntryToUpdate) {
         if (!idToUpdate.equals(diaryEntryToUpdate.getId())) {
+            log.error("A request to update entity with id {} while the entity itself has id of {}. Aborting", idToUpdate, diaryEntryToUpdate.getId());
             throw new DiaryEntryNotMatchForUpdateException(idToUpdate.toString(), diaryEntryToUpdate.getId().toString());
         }
         if (!diaryEntryRepository.existsById(idToUpdate)) {
+            log.error("A request to update entity with id {} while such entity does not exists. Aborting", idToUpdate);
             throw new DiaryEntryNotFoundException(idToUpdate.toString());
         }
         diaryEntryRepository.save(diaryEntryToUpdate);

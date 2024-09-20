@@ -11,3 +11,6 @@ spring:
       port: 27017
       database: DietApp
       auto-index-creation: true #ensure indices created even if collection already exists
+  output:
+    ansi:
+      enabled: ALWAYS
