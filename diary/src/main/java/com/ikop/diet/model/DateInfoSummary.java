@@ -9,7 +9,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class EntriesForDate {
+public class DateInfoSummary {
     private double totalPoints;
     List<DiaryEntry> entries;
 }
