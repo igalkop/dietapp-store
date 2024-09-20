@@ -27,12 +27,15 @@ public class FoodService {
         if (!foodIdToUpdate.equalsIgnoreCase(foodToUpdate.getId())) {
             throw new FoodIdNotMatchForUpdateException(foodIdToUpdate, foodToUpdate.getId());
         }
+        if (!foodRepository.existsById(foodIdToUpdate)) {
+            throw new FoodNotFoundException(foodIdToUpdate);
+        }
         foodRepository.save(foodToUpdate);
     }
 
     public Food findById(String id) {
         return foodRepository.findById(id)
-                .orElseThrow(() -> new FoodNotFoundException("cannot find food with id " + id));
+                .orElseThrow(() -> new FoodNotFoundException(id));
     }
 
     public List<Food> searchForFood(String textToSearch) {

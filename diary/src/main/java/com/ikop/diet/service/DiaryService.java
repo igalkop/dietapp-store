@@ -1,7 +1,7 @@
 package com.ikop.diet.service;
 
+import com.ikop.diet.model.DateInfoSummary;
 import com.ikop.diet.model.DiaryEntry;
-import com.ikop.diet.model.EntriesForDate;
 import com.ikop.diet.repository.DiaryEntryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,15 +23,10 @@ public class DiaryService {
         return diaryEntryRepository.findAllByDate(date);
     }
 
-    public double getTotalPointsForDate(LocalDate date) {
-        List<DiaryEntry> allForDate = getAllForDate(date);
-        return getTotalForDate(allForDate);
-    }
-
-    public EntriesForDate getAllEntriesForDate(LocalDate date) {
+    public DateInfoSummary getAllEntriesForDate(LocalDate date) {
         List<DiaryEntry> allForDate = getAllForDate(date);
         Double totalForDate = getTotalForDate(allForDate);
-        return new EntriesForDate(totalForDate, allForDate);
+        return new DateInfoSummary(totalForDate, allForDate);
     }
 
     private Double getTotalForDate(List<DiaryEntry> allForDate) {
@@ -41,4 +36,13 @@ public class DiaryService {
                 .reduce(0.0, Double::sum);
     }
 
+    public void update(Long idToUpdate, DiaryEntry diaryEntryToUpdate) {
+        if (!idToUpdate.equals(diaryEntryToUpdate.getId())) {
+            throw new DiaryEntryNotMatchForUpdateException(idToUpdate.toString(), diaryEntryToUpdate.getId().toString());
+        }
+        if (!diaryEntryRepository.existsById(idToUpdate)) {
+            throw new DiaryEntryNotFoundException(idToUpdate.toString());
+        }
+        diaryEntryRepository.save(diaryEntryToUpdate);
+    }
 }

@@ -4,6 +4,7 @@ import com.ikop.diet.mapper.FoodMapper;
 import com.ikop.diet.model.Food;
 import com.ikop.diet.model.FoodCreateDTO;
 import com.ikop.diet.model.FoodDTO;
+import com.ikop.diet.repository.FoodRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.CollectionAssert.assertThatCollection;
@@ -47,6 +49,9 @@ class FoodControllerIT {
 
     @Autowired
     private TestRestTemplate testRestTemplate;
+
+    @Autowired
+    private FoodRepository foodRepository;
 
     @Autowired
     private FoodMapper foodMapper;
@@ -222,8 +227,11 @@ class FoodControllerIT {
         String requestBody = new ObjectMapper().writeValueAsString(foodToUpdate);
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
-        HttpEntity<String> httpEntity = new HttpEntity<String>(requestBody, headers);
+        HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
+
         ResponseEntity<Void> responseEntity = testRestTemplate.exchange(urlGetFoodById, HttpMethod.PUT, httpEntity, Void.class);
+
+
         assertThat(responseEntity.getBody()).isNull();
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
 
@@ -246,8 +254,10 @@ class FoodControllerIT {
                 .path(idPath)
                 .build().toUri();
 
-        Object foodToUpdate = new Food(food1.getId(), "food 1 after update", 13, "decription after update");
-        String requestBody = new ObjectMapper().writeValueAsString(foodToUpdate);
+        food1.setName("food 1 after update");
+        food1.setDescription("decription after update");
+        food1.setPoints(13);
+        String requestBody = new ObjectMapper().writeValueAsString(food1);
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
         HttpEntity<String> httpEntity = new HttpEntity<String>(requestBody, headers);
@@ -256,6 +266,42 @@ class FoodControllerIT {
 
         assertThat(responseEntity.getBody()).isNull();
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
+
+        // check nothing was changed in DB
+        Optional<Food> optResponseAfterUpdateDbEntity = foodRepository.findById(food1.getId());
+        assertThat(optResponseAfterUpdateDbEntity).isPresent();
+        Food foodEntryAfterUpdate = optResponseAfterUpdateDbEntity.get();
+        assertThat(foodEntryAfterUpdate).isNotEqualTo(food1);
+        assertThat(foodEntryAfterUpdate.getDescription()).isEqualTo("description 1");
+        assertThat(foodEntryAfterUpdate.getPoints()).isEqualTo(11);
+        assertThat(foodEntryAfterUpdate.getName()).isEqualTo("food1");
+    }
+
+
+    @Test
+    void testUpdateFoodForNonExistingId() throws JsonProcessingException {
+        Food food1 = new Food(null, "food1", 11, "description 1");
+        mongoTemplate.insert(food1);
+
+        Food foodNonExisting = new Food("666", "food2", 11, "description 2");
+
+        String idPath = "/store/food/666";
+        URI urlGetFoodById = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path(idPath)
+                .build().toUri();
+
+        String requestBody = new ObjectMapper().writeValueAsString(foodNonExisting);
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
+        HttpEntity<String> httpEntity = new HttpEntity<String>(requestBody, headers);
+
+        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(urlGetFoodById, HttpMethod.PUT, httpEntity, Void.class);
+
+        assertThat(responseEntity.getBody()).isNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(404));
     }
 
     private void removeAllFromCollection() {
