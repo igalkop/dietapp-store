@@ -11,6 +11,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  output:
+    ansi:
+      enabled: ALWAYS
 
 
 management:
@@ -19,3 +22,5 @@ management:
       exposure:
         include: "*"
         exclude: "env,beans"
+
+
