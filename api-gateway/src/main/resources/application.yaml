@@ -13,10 +13,11 @@ spring:
             uri: ${DIARY_URI:http://localhost:8092}
             predicates:
               - Path=/diary/**
-
-
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8181/realms/diet-app-realm
+
+server:
+  port: 8090
