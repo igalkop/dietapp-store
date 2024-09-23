@@ -1,9 +1,6 @@
 package com.ikop.diet.mapper;
 
-import com.ikop.diet.model.Food;
-import com.ikop.diet.model.FoodCreateDTO;
-import com.ikop.diet.model.FoodDTO;
-import com.ikop.diet.model.FoodToCreate;
+import com.ikop.diet.model.*;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
@@ -15,4 +12,6 @@ public interface FoodMapper {
     public FoodToCreate foodCreateDtoToFoodCreate(FoodCreateDTO foodCreateDTO);
 
     public Food foodCreateToFood(FoodToCreate foodToCreate);
+
+    Food foodUpdateToFood(FoodUpdateDTO foodToUpdate);
 }

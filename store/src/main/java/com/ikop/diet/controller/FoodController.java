@@ -1,10 +1,9 @@
 package com.ikop.diet.controller;
 
 import com.ikop.diet.mapper.FoodMapper;
-import com.ikop.diet.model.Food;
-import com.ikop.diet.model.FoodCreateDTO;
-import com.ikop.diet.model.FoodDTO;
+import com.ikop.diet.model.*;
 import com.ikop.diet.service.FoodService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -40,7 +39,7 @@ public class FoodController {
     }
 
     @PostMapping
-    public ResponseEntity<FoodDTO> createFood(@RequestBody FoodCreateDTO foodToCreateDTO) {
+    public ResponseEntity<FoodDTO> createFood(@Valid @RequestBody FoodCreateDTO foodToCreateDTO) {
         log.info("request to create a food {}", foodToCreateDTO);
         Food created = foodService.saveFood(foodMapper.foodCreateDtoToFoodCreate(foodToCreateDTO));
         log.info("food {} was created successfully", created);
@@ -48,9 +47,9 @@ public class FoodController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<HttpStatus> updateFood(@PathVariable String id, @RequestBody Food foodToUpdate) {
+    public ResponseEntity<HttpStatus> updateFood(@PathVariable String id, @Valid @RequestBody FoodUpdateDTO foodToUpdate) {
         log.info("request to update food with id {} with new values: {}", id, foodToUpdate);
-        foodService.updateFood(id, foodToUpdate);
+        foodService.updateFood(id, foodMapper.foodUpdateToFood(foodToUpdate));
         log.info("food id {} updated successfully", id);
         return ResponseEntity.ok(null);
     }

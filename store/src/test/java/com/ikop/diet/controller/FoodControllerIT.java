@@ -1,9 +1,7 @@
 package com.ikop.diet.controller;
 
 import com.ikop.diet.mapper.FoodMapper;
-import com.ikop.diet.model.Food;
-import com.ikop.diet.model.FoodCreateDTO;
-import com.ikop.diet.model.FoodDTO;
+import com.ikop.diet.model.*;
 import com.ikop.diet.repository.FoodRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -223,7 +221,7 @@ class FoodControllerIT {
                 .path(idPath)
                 .build().toUri();
 
-        Object foodToUpdate = new Food(food1.getId(), "food 1 after update", 13, "decription after update");
+        FoodUpdateDTO foodToUpdate = new FoodUpdateDTO(food1.getId(), "food 1 after update", 13, "decription after update");
         String requestBody = new ObjectMapper().writeValueAsString(foodToUpdate);
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
@@ -237,7 +235,7 @@ class FoodControllerIT {
 
         Food foodAfterUpdate = mongoTemplate.findById(food1.getId(), Food.class);
         assertThat(foodAfterUpdate).isNotNull();
-        assertThat(foodAfterUpdate).isEqualTo(foodToUpdate);
+        assertThat(foodAfterUpdate).isEqualTo(foodMapper.foodUpdateToFood(foodToUpdate));
     }
 
     @Test
@@ -283,7 +281,7 @@ class FoodControllerIT {
         Food food1 = new Food(null, "food1", 11, "description 1");
         mongoTemplate.insert(food1);
 
-        Food foodNonExisting = new Food("666", "food2", 11, "description 2");
+        FoodUpdateDTO foodNonExisting = new FoodUpdateDTO("666", "food2", 11, "description 2");
 
         String idPath = "/store/food/666";
         URI urlGetFoodById = UriComponentsBuilder.newInstance()
