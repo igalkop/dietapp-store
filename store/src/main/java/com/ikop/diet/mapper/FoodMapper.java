@@ -2,6 +2,7 @@ package com.ikop.diet.mapper;
 
 import com.ikop.diet.model.*;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface FoodMapper {
@@ -11,6 +12,7 @@ public interface FoodMapper {
 
     public FoodToCreate foodCreateDtoToFoodCreate(FoodCreateDTO foodCreateDTO);
 
+    @Mapping(target = "id", ignore = true)
     public Food foodCreateToFood(FoodToCreate foodToCreate);
 
     Food foodUpdateToFood(FoodUpdateDTO foodToUpdate);

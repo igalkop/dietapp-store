@@ -23,7 +23,7 @@ public class FoodController {
     private final FoodMapper foodMapper;
 
     @GetMapping("/all")
-    public ResponseEntity<Foods> getAllFoods() {
+    public @Valid ResponseEntity<Foods> getAllFoods() {
         log.info("request to get all foods in the Store");
         List<Food> allFoods = foodService.getAllFoods();
         log.info("total number of foods in catalog: {}", allFoods.size());
@@ -39,7 +39,7 @@ public class FoodController {
     }
 
     @PostMapping
-    public ResponseEntity<FoodDTO> createFood(@Valid @RequestBody FoodCreateDTO foodToCreateDTO) {
+    public @Valid ResponseEntity<FoodDTO> createFood(@Valid @RequestBody FoodCreateDTO foodToCreateDTO) {
         log.info("request to create a food {}", foodToCreateDTO);
         Food created = foodService.saveFood(foodMapper.foodCreateDtoToFoodCreate(foodToCreateDTO));
         log.info("food {} was created successfully", created);
@@ -55,7 +55,7 @@ public class FoodController {
     }
 
     @GetMapping("/search/{text}")
-    public ResponseEntity<List<FoodDTO>> searchByText(@PathVariable String text) {
+    public @Valid ResponseEntity<List<FoodDTO>> searchByText(@PathVariable String text) {
         log.info("request to search a food with the following string in name or description {}", text);
         List<FoodDTO> listOfMatchingFoods = foodService.searchForFood(text).stream().map(foodMapper::foodToFoodDto).toList();
         log.info("total number of matching foods found {}", listOfMatchingFoods.size());

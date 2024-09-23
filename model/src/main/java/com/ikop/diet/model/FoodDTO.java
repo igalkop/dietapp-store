@@ -12,15 +12,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class FoodDTO {
-    @NotNull
+    @NotNull(message = "id cannot be empty")
     private String id;
 
     @NotBlank(message = "name cannot be empty")
     private String name;
 
-    @NotNull
+    @NotNull(message = "points cannot be null")
     @DecimalMin(value = "0.01", message = "minimal value of points is 0.1")
-    private double points;
+    private Double points;
 
     @NotBlank(message = "description cannot be empty")
     private String description;

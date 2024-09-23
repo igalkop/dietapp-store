@@ -10,7 +10,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 public class FoodUpdateDTO extends FoodDTO {
 
-    public FoodUpdateDTO(String id, String name, double points, String description) {
+    public FoodUpdateDTO(String id, String name, Double points, String description) {
         super(id, name, points, description);
     }
 
