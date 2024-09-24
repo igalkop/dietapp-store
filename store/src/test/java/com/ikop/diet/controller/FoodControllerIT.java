@@ -302,6 +302,50 @@ class FoodControllerIT {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(404));
     }
 
+    @Test
+    void testCreateInvalidFoodShouldFailByValidationErrors() {
+        URI urlSave = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path("/store/food")
+                .build().toUri();
+
+        FoodCreateDTO foodCreateDTO = new FoodCreateDTO(null, -3.5d, "some desc");
+        ResponseEntity<String> created = testRestTemplate.postForEntity(urlSave, foodCreateDTO, String.class);
+        assertThat(created.getStatusCode().value()).isEqualTo(400);
+        assertThat(created.getBody()).contains("name cannot be empty");
+        assertThat(created.getBody()).contains("minimal value of points is 0.1");
+    }
+
+
+    @Test
+    void testUpdateInvalidFoodShouldFailByValidationErrors() throws JsonProcessingException {
+        Food food1 = new Food(null, "food1", 11d, "description 1");
+        mongoTemplate.insert(food1);
+
+        String idPath = "/store/food/FOOD_ID";
+        idPath = idPath.replace("FOOD_ID", food1.getId());
+        URI urlGetFoodById = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path(idPath)
+                .build().toUri();
+
+        FoodUpdateDTO foodToUpdate = new FoodUpdateDTO(food1.getId(), null, -3d, "decription after update");
+        String requestBody = new ObjectMapper().writeValueAsString(foodToUpdate);
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
+        HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> responseEntity = testRestTemplate.exchange(urlGetFoodById, HttpMethod.PUT, httpEntity, String.class);
+
+        assertThat(responseEntity.getStatusCode().value()).isEqualTo(400);
+        assertThat(responseEntity.getBody()).contains("name cannot be empty");
+        assertThat(responseEntity.getBody()).contains("minimal value of points is 0.1");
+    }
+
     private void removeAllFromCollection() {
         mongoTemplate.remove(new Query(), COLLECTION_NAME);
     }

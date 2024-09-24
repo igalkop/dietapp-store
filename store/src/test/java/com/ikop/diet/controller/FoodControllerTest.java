@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatCollection;
 
 class FoodControllerTest {
 
-    private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+    private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     public static Stream<Arguments> dtoTestProvider() {
         return Stream.of(

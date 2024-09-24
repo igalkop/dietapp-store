@@ -9,9 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/food")
@@ -23,7 +27,7 @@ public class FoodController {
     private final FoodMapper foodMapper;
 
     @GetMapping("/all")
-    public @Valid ResponseEntity<Foods> getAllFoods() {
+    public ResponseEntity<Foods> getAllFoods() {
         log.info("request to get all foods in the Store");
         List<Food> allFoods = foodService.getAllFoods();
         log.info("total number of foods in catalog: {}", allFoods.size());
@@ -39,7 +43,7 @@ public class FoodController {
     }
 
     @PostMapping
-    public @Valid ResponseEntity<FoodDTO> createFood(@Valid @RequestBody FoodCreateDTO foodToCreateDTO) {
+    public ResponseEntity<FoodDTO> createFood(@Valid @RequestBody FoodCreateDTO foodToCreateDTO) {
         log.info("request to create a food {}", foodToCreateDTO);
         Food created = foodService.saveFood(foodMapper.foodCreateDtoToFoodCreate(foodToCreateDTO));
         log.info("food {} was created successfully", created);
@@ -55,10 +59,24 @@ public class FoodController {
     }
 
     @GetMapping("/search/{text}")
-    public @Valid ResponseEntity<List<FoodDTO>> searchByText(@PathVariable String text) {
+    public ResponseEntity<List<FoodDTO>> searchByText(@PathVariable String text) {
         log.info("request to search a food with the following string in name or description {}", text);
         List<FoodDTO> listOfMatchingFoods = foodService.searchForFood(text).stream().map(foodMapper::foodToFoodDto).toList();
         log.info("total number of matching foods found {}", listOfMatchingFoods.size());
         return ResponseEntity.ok(listOfMatchingFoods);
+    }
+
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Map<String, String> handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return errors;
     }
 }
