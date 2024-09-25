@@ -1,9 +1,7 @@
 package com.ikop.diet.controller;
 
 import com.ikop.diet.mapper.FoodMapper;
-import com.ikop.diet.model.Food;
-import com.ikop.diet.model.FoodCreateDTO;
-import com.ikop.diet.model.FoodDTO;
+import com.ikop.diet.model.*;
 import com.ikop.diet.repository.FoodRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,7 +83,7 @@ class FoodControllerIT {
         String idPath = "/store/food/FOOD_ID";
 
 
-        Food foodToCreate = new Food(null, "food1", 11, "description 1");
+        Food foodToCreate = new Food(null, "food1", 11d, "description 1");
         mongoTemplate.insert(foodToCreate);
         idPath = idPath.replace("FOOD_ID", foodToCreate.getId());
         URI urlGetFoodById = UriComponentsBuilder.newInstance()
@@ -109,7 +107,7 @@ class FoodControllerIT {
         String idPath = "/store/food/FOOD_ID";
 
 
-        Food foodToCreate = new Food(null, "food1", 11, "description 1");
+        Food foodToCreate = new Food(null, "food1", 11d, "description 1");
         mongoTemplate.insert(foodToCreate);
         idPath = idPath.replace("FOOD_ID", "12345567664");
         URI urlGetFoodById = UriComponentsBuilder.newInstance()
@@ -126,8 +124,8 @@ class FoodControllerIT {
 
     @Test
     void getExistingFoods() {
-        Food food1 = new Food(null, "food1", 11, "description 1");
-        Food food2 = new Food(null, "food2", 22, "description 2");
+        Food food1 = new Food(null, "food1", 11d, "description 1");
+        Food food2 = new Food(null, "food2", 22d, "description 2");
         Collection<Food> foodsToCreate = List.of(food1, food2);
         mongoTemplate.insertAll(foodsToCreate);
 
@@ -168,9 +166,9 @@ class FoodControllerIT {
 
     @Test
     void searchForFood() {
-        Food food1 = new Food(null, "food1", 11, "description 1");
-        Food food2 = new Food(null, "food2", 22, "description 2");
-        Food food3 = new Food(null, "food3", 22, "description 3");
+        Food food1 = new Food(null, "food1", 11d, "description 1");
+        Food food2 = new Food(null, "food2", 22d, "description 2");
+        Food food3 = new Food(null, "food3", 22d, "description 3");
         Collection<Food> foodsToCreate = List.of(food1, food2, food3);
         mongoTemplate.insertAll(foodsToCreate);
 
@@ -211,7 +209,7 @@ class FoodControllerIT {
 
     @Test
     void testUpdateFood() throws JsonProcessingException {
-        Food food1 = new Food(null, "food1", 11, "description 1");
+        Food food1 = new Food(null, "food1", 11d, "description 1");
         mongoTemplate.insert(food1);
 
         String idPath = "/store/food/FOOD_ID";
@@ -223,7 +221,7 @@ class FoodControllerIT {
                 .path(idPath)
                 .build().toUri();
 
-        Object foodToUpdate = new Food(food1.getId(), "food 1 after update", 13, "decription after update");
+        FoodUpdateDTO foodToUpdate = new FoodUpdateDTO(food1.getId(), "food 1 after update", 13d, "decription after update");
         String requestBody = new ObjectMapper().writeValueAsString(foodToUpdate);
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
@@ -237,12 +235,12 @@ class FoodControllerIT {
 
         Food foodAfterUpdate = mongoTemplate.findById(food1.getId(), Food.class);
         assertThat(foodAfterUpdate).isNotNull();
-        assertThat(foodAfterUpdate).isEqualTo(foodToUpdate);
+        assertThat(foodAfterUpdate).isEqualTo(foodMapper.foodUpdateToFood(foodToUpdate));
     }
 
     @Test
     void testUpdateFoodWithIncorrectIdInPath() throws JsonProcessingException {
-        Food food1 = new Food(null, "food1", 11, "description 1");
+        Food food1 = new Food(null, "food1", 11d, "description 1");
         mongoTemplate.insert(food1);
 
         String idPath = "/store/food/FOOD_ID";
@@ -256,7 +254,7 @@ class FoodControllerIT {
 
         food1.setName("food 1 after update");
         food1.setDescription("decription after update");
-        food1.setPoints(13);
+        food1.setPoints(13d);
         String requestBody = new ObjectMapper().writeValueAsString(food1);
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
@@ -280,10 +278,10 @@ class FoodControllerIT {
 
     @Test
     void testUpdateFoodForNonExistingId() throws JsonProcessingException {
-        Food food1 = new Food(null, "food1", 11, "description 1");
+        Food food1 = new Food(null, "food1", 11d, "description 1");
         mongoTemplate.insert(food1);
 
-        Food foodNonExisting = new Food("666", "food2", 11, "description 2");
+        FoodUpdateDTO foodNonExisting = new FoodUpdateDTO("666", "food2", 11d, "description 2");
 
         String idPath = "/store/food/666";
         URI urlGetFoodById = UriComponentsBuilder.newInstance()
@@ -302,6 +300,50 @@ class FoodControllerIT {
 
         assertThat(responseEntity.getBody()).isNull();
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(404));
+    }
+
+    @Test
+    void testCreateInvalidFoodShouldFailByValidationErrors() {
+        URI urlSave = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path("/store/food")
+                .build().toUri();
+
+        FoodCreateDTO foodCreateDTO = new FoodCreateDTO(null, -3.5d, "some desc");
+        ResponseEntity<String> created = testRestTemplate.postForEntity(urlSave, foodCreateDTO, String.class);
+        assertThat(created.getStatusCode().value()).isEqualTo(400);
+        assertThat(created.getBody()).contains("name cannot be empty");
+        assertThat(created.getBody()).contains("minimal value of points is 0.1");
+    }
+
+
+    @Test
+    void testUpdateInvalidFoodShouldFailByValidationErrors() throws JsonProcessingException {
+        Food food1 = new Food(null, "food1", 11d, "description 1");
+        mongoTemplate.insert(food1);
+
+        String idPath = "/store/food/FOOD_ID";
+        idPath = idPath.replace("FOOD_ID", food1.getId());
+        URI urlGetFoodById = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path(idPath)
+                .build().toUri();
+
+        FoodUpdateDTO foodToUpdate = new FoodUpdateDTO(food1.getId(), null, -3d, "decription after update");
+        String requestBody = new ObjectMapper().writeValueAsString(foodToUpdate);
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
+        HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> responseEntity = testRestTemplate.exchange(urlGetFoodById, HttpMethod.PUT, httpEntity, String.class);
+
+        assertThat(responseEntity.getStatusCode().value()).isEqualTo(400);
+        assertThat(responseEntity.getBody()).contains("name cannot be empty");
+        assertThat(responseEntity.getBody()).contains("minimal value of points is 0.1");
     }
 
     private void removeAllFromCollection() {

@@ -10,6 +10,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Data
 public class DiaryEntryDTO {
+    private Long id;
     private String foodName;
     private double foodPoints;
     private double amount;
