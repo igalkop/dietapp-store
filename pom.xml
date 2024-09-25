@@ -23,7 +23,6 @@
 	</developers>
     <modules>
         <module>store</module>
-		<module>diary</module>
 		<module>api-gateway</module>
     </modules>
     <scm>
