@@ -16,7 +16,7 @@ public class Food {
     private String id;
     @TextIndexed
     private String name;
-    private double points;
+    private Double points;
     @TextIndexed
     private String description;
 }

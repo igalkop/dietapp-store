@@ -1,6 +1,5 @@
-package com.ikop.diet.controller;
+package com.ikop.diet.model;
 
-import com.ikop.diet.model.FoodDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
