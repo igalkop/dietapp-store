@@ -3,6 +3,7 @@ package com.ikop.diet.controllers;
 import com.ikop.diet.mapper.DiaryEntryMapper;
 import com.ikop.diet.model.*;
 import com.ikop.diet.service.DiaryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
@@ -22,7 +23,7 @@ public class DiaryController {
 
 
     @PostMapping
-    public ResponseEntity<DiaryEntryDTO> createDiaryEntry(@RequestBody DiaryEntryCreateDTO diaryEntryCreateDTO) {
+    public ResponseEntity<DiaryEntryDTO> createDiaryEntry(@Valid @RequestBody DiaryEntryCreateDTO diaryEntryCreateDTO) {
         log.info("request to create a Diary Entry: {}", diaryEntryCreateDTO);
         DiaryEntry diaryEntryCreated = diaryService.save(mapper.diaryEntryCreateDtoToDiaryEntry(diaryEntryCreateDTO));
         log.info("Diary Entry successfully created");
@@ -30,7 +31,7 @@ public class DiaryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updateDiaryEntry(@PathVariable Long id, @RequestBody DiaryEntryUpdateDTO diaryEntryToUpdate) {
+    public ResponseEntity<Void> updateDiaryEntry(@PathVariable Long id, @Valid @RequestBody DiaryEntryUpdateDTO diaryEntryToUpdate) {
         log.info("request to update a Diary Entry: {}", diaryEntryToUpdate);
         diaryService.update(id, mapper.diaryEntryUpdateDtoToDiaryEntry(diaryEntryToUpdate));
         log.info("Diary Entry successfully updated");

@@ -96,9 +96,9 @@ class DiaryControllerIT {
     @Test
     void testCreateDiaryEntry() {
         LocalDate date = LocalDate.now().minus(3, ChronoUnit.DAYS);
-        DiaryEntryCreateDTO diaryEntry = new DiaryEntryCreateDTO("food 1", 1.5, 1, date);
-        DiaryEntryCreateDTO diaryEntry2 = new DiaryEntryCreateDTO("food 2", 2.5, 2, date);
-        DiaryEntryCreateDTO diaryEntry3 = new DiaryEntryCreateDTO("food 3", 3.5, 3, date);
+        DiaryEntryCreateDTO diaryEntry = new DiaryEntryCreateDTO("food 1", 1.5, 1d, date);
+        DiaryEntryCreateDTO diaryEntry2 = new DiaryEntryCreateDTO("food 2", 2.5, 2d, date);
+        DiaryEntryCreateDTO diaryEntry3 = new DiaryEntryCreateDTO("food 3", 3.5, 3d, date);
         List<DiaryEntryCreateDTO> allEntries = List.of(diaryEntry, diaryEntry2, diaryEntry3);
 
         URI urlGetEntriesForDate = UriComponentsBuilder.newInstance()
@@ -144,7 +144,7 @@ class DiaryControllerIT {
                 .path(idPath)
                 .build().toUri();
 
-        DiaryEntryUpdateDTO diaryEntryUpdateDTO = new DiaryEntryUpdateDTO(diaryEntry2.getId(), "food 2 updated", diaryEntry2.getFoodPoints(), 2, diaryEntry2.getDate());
+        DiaryEntryUpdateDTO diaryEntryUpdateDTO = new DiaryEntryUpdateDTO(diaryEntry2.getId(), "food 2 updated", diaryEntry2.getFoodPoints(), 2d, diaryEntry2.getDate());
         String requestBody = mapper.writeValueAsString(diaryEntryUpdateDTO);
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
@@ -182,7 +182,7 @@ class DiaryControllerIT {
                 .path(idPath)
                 .build().toUri();
 
-        DiaryEntryUpdateDTO diaryEntryUpdateDTO = new DiaryEntryUpdateDTO(diaryEntry2.getId(), "food 2 updated", diaryEntry2.getFoodPoints(), 2, diaryEntry2.getDate());
+        DiaryEntryUpdateDTO diaryEntryUpdateDTO = new DiaryEntryUpdateDTO(diaryEntry2.getId(), "food 2 updated", diaryEntry2.getFoodPoints(), 2d, diaryEntry2.getDate());
 
         String requestBody = mapper.writeValueAsString(diaryEntryUpdateDTO);
         MultiValueMap<String, String> headers = new HttpHeaders();
@@ -209,7 +209,7 @@ class DiaryControllerIT {
         DiaryEntry diaryEntry3 = new DiaryEntry(null, "food3", 1, 1, now);
         diaryEntryRepository.saveAll(List.of(diaryEntry, diaryEntry2, diaryEntry3));
 
-        DiaryEntryUpdateDTO diaryEntryNonExisting = new DiaryEntryUpdateDTO(666L, "food4", 1, 1, now);
+        DiaryEntryUpdateDTO diaryEntryNonExisting = new DiaryEntryUpdateDTO(666L, "food4", 1d, 1d, now);
 
         String idPath = "/diary/api/666";
         URI urlUpdateEntryForDate = UriComponentsBuilder.newInstance()
