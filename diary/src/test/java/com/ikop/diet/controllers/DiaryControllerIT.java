@@ -2,8 +2,8 @@ package com.ikop.diet.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ikop.diet.model.DateInfoSummary;
-import com.ikop.diet.model.DiaryEntry;
+import com.ikop.diet.mapper.DiaryEntryMapper;
+import com.ikop.diet.model.*;
 import com.ikop.diet.repository.DiaryEntryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +49,9 @@ class DiaryControllerIT {
     @Autowired
     private TestRestTemplate testRestTemplate;
 
+    @Autowired
+    private DiaryEntryMapper diaryEntryMapper;
+
 
     @Container
     @ServiceConnection
@@ -80,20 +83,23 @@ class DiaryControllerIT {
                 .path(getForDatePath)
                 .build().toUri();
 
-        ResponseEntity<DateInfoSummary> allDiaryEntriesForDate = testRestTemplate.getForEntity(urlGetEntriesForDate, DateInfoSummary.class);
+        ResponseEntity<DateInfoSummaryDTO> allDiaryEntriesForDate = testRestTemplate.getForEntity(urlGetEntriesForDate, DateInfoSummaryDTO.class);
+
         assertThat(allDiaryEntriesForDate.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
         assertThat(allDiaryEntriesForDate.getBody().getEntries().size()).isEqualTo(3);
-        assertThatCollection(allDiaryEntriesForDate.getBody().getEntries()).containsExactlyInAnyOrderElementsOf(List.of(diaryEntry, diaryEntry2, diaryEntry3));
+        assertThatCollection(allDiaryEntriesForDate.getBody().getEntries()).containsExactlyInAnyOrderElementsOf(
+                List.of(diaryEntryMapper.diaryEntryToDiaryEntryDto(diaryEntry), diaryEntryMapper.diaryEntryToDiaryEntryDto(diaryEntry2),
+                        diaryEntryMapper.diaryEntryToDiaryEntryDto(diaryEntry3)));
         assertThat(allDiaryEntriesForDate.getBody().getTotalPoints()).isEqualTo(12.1);
     }
 
     @Test
-    void testPersistEntities() {
+    void testCreateDiaryEntry() {
         LocalDate date = LocalDate.now().minus(3, ChronoUnit.DAYS);
-        DiaryEntry diaryEntry = new DiaryEntry(null, "food 1", 1.5, 1, date);
-        DiaryEntry diaryEntry2 = new DiaryEntry(null, "food 2", 2.5, 2, date);
-        DiaryEntry diaryEntry3 = new DiaryEntry(null, "food 3", 3.5, 3, date);
-        List<DiaryEntry> allEntries = List.of(diaryEntry, diaryEntry2, diaryEntry3);
+        DiaryEntryCreateDTO diaryEntry = new DiaryEntryCreateDTO("food 1", 1.5, 1, date);
+        DiaryEntryCreateDTO diaryEntry2 = new DiaryEntryCreateDTO("food 2", 2.5, 2, date);
+        DiaryEntryCreateDTO diaryEntry3 = new DiaryEntryCreateDTO("food 3", 3.5, 3, date);
+        List<DiaryEntryCreateDTO> allEntries = List.of(diaryEntry, diaryEntry2, diaryEntry3);
 
         URI urlGetEntriesForDate = UriComponentsBuilder.newInstance()
                 .scheme("http")
@@ -103,8 +109,8 @@ class DiaryControllerIT {
                 .build().toUri();
 
 
-        for (DiaryEntry entry : allEntries) {
-            ResponseEntity<DiaryEntry> response = testRestTemplate.postForEntity(urlGetEntriesForDate, entry, DiaryEntry.class);
+        for (DiaryEntryCreateDTO entry : allEntries) {
+            ResponseEntity<DiaryEntryDTO> response = testRestTemplate.postForEntity(urlGetEntriesForDate, entry, DiaryEntryDTO.class);
             assertThat(response.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(201));
             assertThat(response.getBody())
                     .hasNoNullFieldsOrProperties()
@@ -115,14 +121,14 @@ class DiaryControllerIT {
         }
 
         long count = diaryEntryRepository.count();
-        assertThat(count).isEqualTo(3);
+        assertThat(count).isEqualTo(allEntries.size());
         assertThatCollection(diaryEntryRepository.findAll())
                 .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id")
                 .isEqualTo(allEntries);
     }
 
     @Test
-    void testUpdateDiaryEntryForDate() throws JsonProcessingException, JsonProcessingException {
+    void testUpdateDiaryEntryForDate() throws JsonProcessingException {
         LocalDate now = LocalDate.now();
         DiaryEntry diaryEntry = new DiaryEntry(null, "food1", 3.3, 2, now);
         DiaryEntry diaryEntry2 = new DiaryEntry(null, "food2", 4.5, 1, now);
@@ -138,9 +144,8 @@ class DiaryControllerIT {
                 .path(idPath)
                 .build().toUri();
 
-        diaryEntry2.setAmount(2);
-        diaryEntry2.setFoodName("food 2 updated");
-        String requestBody = mapper.writeValueAsString(diaryEntry2);
+        DiaryEntryUpdateDTO diaryEntryUpdateDTO = new DiaryEntryUpdateDTO(diaryEntry2.getId(), "food 2 updated", diaryEntry2.getFoodPoints(), 2, diaryEntry2.getDate());
+        String requestBody = mapper.writeValueAsString(diaryEntryUpdateDTO);
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
         HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
@@ -152,12 +157,17 @@ class DiaryControllerIT {
         Optional<DiaryEntry> optResponseAfterUpdateDbEntity = diaryEntryRepository.findById(diaryEntry2.getId());
         assertThat(optResponseAfterUpdateDbEntity).isPresent();
         DiaryEntry diaryEntryAfterUpdate = optResponseAfterUpdateDbEntity.get();
-        assertThat(diaryEntryAfterUpdate).isEqualTo(diaryEntry2);
+        assertThat(diaryEntryAfterUpdate)
+                .hasNoNullFieldsOrProperties()
+                .usingRecursiveComparison()
+                .ignoringFields("id")
+                .isEqualTo(diaryEntryUpdateDTO);
+
     }
 
 
     @Test
-    void testUpdateDiaryEntryForDateForMismatchEntityId() throws JsonProcessingException, JsonProcessingException {
+    void testUpdateDiaryEntryForDateForMismatchEntityId() throws JsonProcessingException {
         LocalDate now = LocalDate.now();
         DiaryEntry diaryEntry = new DiaryEntry(null, "food1", 3.3, 2, now);
         DiaryEntry diaryEntry2 = new DiaryEntry(null, "food2", 4.5, 1, now);
@@ -172,9 +182,9 @@ class DiaryControllerIT {
                 .path(idPath)
                 .build().toUri();
 
-        diaryEntry2.setAmount(2);
-        diaryEntry2.setFoodName("food 2 updated");
-        String requestBody = mapper.writeValueAsString(diaryEntry2);
+        DiaryEntryUpdateDTO diaryEntryUpdateDTO = new DiaryEntryUpdateDTO(diaryEntry2.getId(), "food 2 updated", diaryEntry2.getFoodPoints(), 2, diaryEntry2.getDate());
+
+        String requestBody = mapper.writeValueAsString(diaryEntryUpdateDTO);
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
         HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
@@ -187,21 +197,19 @@ class DiaryControllerIT {
         Optional<DiaryEntry> optResponseAfterUpdateDbEntity = diaryEntryRepository.findById(diaryEntry2.getId());
         assertThat(optResponseAfterUpdateDbEntity).isPresent();
         DiaryEntry diaryEntryAfterUpdate = optResponseAfterUpdateDbEntity.get();
-        assertThat(diaryEntryAfterUpdate).isNotEqualTo(diaryEntry2);
-        assertThat(diaryEntryAfterUpdate.getFoodName()).isEqualTo("food2");
-        assertThat(diaryEntryAfterUpdate.getAmount()).isEqualTo(1);
+        assertThat(diaryEntryAfterUpdate).isEqualTo(diaryEntry2);
     }
 
 
     @Test
-    void testUpdateDiaryEntryForDateForNonExistingId() throws JsonProcessingException, JsonProcessingException {
+    void testUpdateDiaryEntryForDateForNonExistingId() throws JsonProcessingException {
         LocalDate now = LocalDate.now();
         DiaryEntry diaryEntry = new DiaryEntry(null, "food1", 3.3, 2, now);
         DiaryEntry diaryEntry2 = new DiaryEntry(null, "food2", 4.5, 1, now);
         DiaryEntry diaryEntry3 = new DiaryEntry(null, "food3", 1, 1, now);
         diaryEntryRepository.saveAll(List.of(diaryEntry, diaryEntry2, diaryEntry3));
 
-        DiaryEntry diaryEntryNonExisting = new DiaryEntry(666L, "food4", 1, 1, now);
+        DiaryEntryUpdateDTO diaryEntryNonExisting = new DiaryEntryUpdateDTO(666L, "food4", 1, 1, now);
 
         String idPath = "/diary/api/666";
         URI urlUpdateEntryForDate = UriComponentsBuilder.newInstance()

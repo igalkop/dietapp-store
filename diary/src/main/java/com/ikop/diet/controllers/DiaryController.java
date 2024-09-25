@@ -1,7 +1,7 @@
 package com.ikop.diet.controllers;
 
-import com.ikop.diet.model.DateInfoSummary;
-import com.ikop.diet.model.DiaryEntry;
+import com.ikop.diet.mapper.DiaryEntryMapper;
+import com.ikop.diet.model.*;
 import com.ikop.diet.service.DiaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,29 +18,30 @@ import java.time.LocalDate;
 public class DiaryController {
 
     private final DiaryService diaryService;
+    private final DiaryEntryMapper mapper;
 
 
     @PostMapping
-    public ResponseEntity<DiaryEntry> createDiaryEntry(@RequestBody DiaryEntry diaryEntry) {
-        log.info("request to create a Diary Entry: {}", diaryEntry);
-        DiaryEntry saved = diaryService.save(diaryEntry);
+    public ResponseEntity<DiaryEntryDTO> createDiaryEntry(@RequestBody DiaryEntryCreateDTO diaryEntryCreateDTO) {
+        log.info("request to create a Diary Entry: {}", diaryEntryCreateDTO);
+        DiaryEntry diaryEntryCreated = diaryService.save(mapper.diaryEntryCreateDtoToDiaryEntry(diaryEntryCreateDTO));
         log.info("Diary Entry successfully created");
-        return new ResponseEntity<>(saved, HttpStatusCode.valueOf(201));
+        return new ResponseEntity<>(mapper.diaryEntryToDiaryEntryDto(diaryEntryCreated), HttpStatusCode.valueOf(201));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updateDiaryEntry(@PathVariable Long id, @RequestBody DiaryEntry diaryEntry) {
-        log.info("request to update a Diary Entry: {}", diaryEntry);
-        diaryService.update(id, diaryEntry);
+    public ResponseEntity<Void> updateDiaryEntry(@PathVariable Long id, @RequestBody DiaryEntryUpdateDTO diaryEntryToUpdate) {
+        log.info("request to update a Diary Entry: {}", diaryEntryToUpdate);
+        diaryService.update(id, mapper.diaryEntryUpdateDtoToDiaryEntry(diaryEntryToUpdate));
         log.info("Diary Entry successfully updated");
         return ResponseEntity.ok(null);
     }
 
     @GetMapping("/list/{year}/{month}/{day}")
-    public ResponseEntity<DateInfoSummary> getDateSummary(@PathVariable Integer year, @PathVariable Integer month, @PathVariable Integer day) {
+    public ResponseEntity<DateInfoSummaryDTO> getDateSummary(@PathVariable Integer year, @PathVariable Integer month, @PathVariable Integer day) {
         LocalDate date = LocalDate.of(year, month, day);
         log.info("request to get diary summery for date: {}", date);
         DateInfoSummary allEntriesForDate = diaryService.getAllEntriesForDate(date);
-        return ResponseEntity.ok(allEntriesForDate);
+        return ResponseEntity.ok(mapper.dateInfoSummaryToDateInfoSummaryDto(allEntriesForDate));
     }
 }

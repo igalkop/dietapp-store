@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class DiaryEntryDTO {
+public class DiaryEntryUpdateDTO {
     private Long id;
     private String foodName;
     private double foodPoints;
