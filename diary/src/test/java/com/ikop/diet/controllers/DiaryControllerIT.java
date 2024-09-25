@@ -27,6 +27,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.CollectionAssert.assertThatCollection;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Testcontainers
@@ -101,7 +102,7 @@ class DiaryControllerIT {
         DiaryEntryCreateDTO diaryEntry3 = new DiaryEntryCreateDTO("food 3", 3.5, 3d, date);
         List<DiaryEntryCreateDTO> allEntries = List.of(diaryEntry, diaryEntry2, diaryEntry3);
 
-        URI urlGetEntriesForDate = UriComponentsBuilder.newInstance()
+        URI urlCreateDiaryEntry = UriComponentsBuilder.newInstance()
                 .scheme("http")
                 .host(HOST)
                 .port(port)
@@ -110,7 +111,7 @@ class DiaryControllerIT {
 
 
         for (DiaryEntryCreateDTO entry : allEntries) {
-            ResponseEntity<DiaryEntryDTO> response = testRestTemplate.postForEntity(urlGetEntriesForDate, entry, DiaryEntryDTO.class);
+            ResponseEntity<DiaryEntryDTO> response = testRestTemplate.postForEntity(urlCreateDiaryEntry, entry, DiaryEntryDTO.class);
             assertThat(response.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(201));
             assertThat(response.getBody())
                     .hasNoNullFieldsOrProperties()
@@ -228,5 +229,53 @@ class DiaryControllerIT {
         ResponseEntity<Void> responseEntity = testRestTemplate.exchange(urlUpdateEntryForDate, HttpMethod.PUT, httpEntity, Void.class);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(404));
         assertThat(responseEntity.getBody()).isNull();
+    }
+
+
+    @Test
+    void testCreateInvalidDiaryEntryShouldFailByValidationErrors() {
+        DiaryEntryCreateDTO entry = new DiaryEntryCreateDTO(null, 1.5, 1d, null);
+        URI urlCreateDiaryEntry = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path("/diary/api")
+                .build().toUri();
+
+        ResponseEntity<String> response = testRestTemplate.postForEntity(urlCreateDiaryEntry, entry, String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
+
+        assertThat(response.getBody()).contains("foodName cannot be empty");
+        assertThat(response.getBody()).contains("date cannot be empty");
+    }
+
+    @Test
+    void testUpdateInvalidDiaryEntryShouldFailByValidationErrors() throws JsonProcessingException {
+        LocalDate now = LocalDate.now();
+        DiaryEntry diaryEntry = new DiaryEntry(null, "food1", 3.3, 2, now);
+        diaryEntryRepository.save(diaryEntry);
+
+        String idPath = "/diary/api/ID";
+        idPath = idPath.replace("ID", diaryEntry.getId().toString());
+        URI urlUpdateEntryForDate = UriComponentsBuilder.newInstance()
+                .scheme("http")
+                .host(HOST)
+                .port(port)
+                .path(idPath)
+                .build().toUri();
+
+        DiaryEntryUpdateDTO diaryEntryUpdateDTO = new DiaryEntryUpdateDTO(diaryEntry.getId(), "food 2 updated", -3d, 0d, LocalDate.now().plusDays(2));
+        String requestBody = mapper.writeValueAsString(diaryEntryUpdateDTO);
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_VALUE);
+        HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> responseEntity = testRestTemplate.exchange(urlUpdateEntryForDate, HttpMethod.PUT, httpEntity, String.class);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
+
+        assertThat(responseEntity.getStatusCode()).isEqualTo(BAD_REQUEST);
+        assertThat(responseEntity.getBody()).contains("foodPoints must be positive");
+        assertThat(responseEntity.getBody()).contains("amount must be positive");
+        assertThat(responseEntity.getBody()).contains("date must be today or previous date");
     }
 }
