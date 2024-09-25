@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.ikop.diet</groupId>
-	<artifactId>dietapp</artifactId>
+	<artifactId>dietapp-store</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>dietapp</name>
+	<name>dietapp-store</name>
 	<description>Storage for WW points for different foods</description>
 	<url/>
 	<licenses>
@@ -24,7 +24,6 @@
     <modules>
         <module>store</module>
 		<module>diary</module>
-        <module>model</module>
 		<module>api-gateway</module>
     </modules>
     <scm>
