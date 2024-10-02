@@ -47,7 +47,7 @@ public class FoodController {
         log.info("request to create a food {}", foodToCreateDTO);
         Food created = foodService.saveFood(foodMapper.foodCreateDtoToFoodCreate(foodToCreateDTO));
         log.info("food {} was created successfully", created);
-        return new ResponseEntity(foodMapper.foodToFoodDto(created), HttpStatusCode.valueOf(201));
+        return new ResponseEntity<>(foodMapper.foodToFoodDto(created), HttpStatusCode.valueOf(201));
     }
 
     @PutMapping("/{id}")
