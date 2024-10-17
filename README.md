@@ -5,3 +5,9 @@ details.
 
 # dietapp
 
+### Jacoco reports are located in:
+
+target/jacoco-aggregate/index.html
+
+(use maven "_full-build_" to run both **UT** and **IT** in Verify phase)
+
